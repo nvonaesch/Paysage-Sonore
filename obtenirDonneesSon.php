@@ -5,7 +5,13 @@ if ($mysqli->connect_error) {
     die('Erreur de connexion à la base de données : ' . $mysqli->connect_error);
 }
 
-$idSon = intval($_GET['idSon']);
+$idSon = isset($_GET['idSon']) ? intval($_GET['idSon']) : 0;
+
+if ($idSon <= 0) {
+    echo json_encode(array('error' => 'ID de son invalide.'));
+    exit;
+}
+
 $data = array();
 
 $sql = "SELECT posLat, posLon, descriptionSon FROM son WHERE idSon = ?";
