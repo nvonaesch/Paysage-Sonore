@@ -14,7 +14,7 @@ if ($idSon <= 0) {
 
 $data = array();
 
-$sql = "SELECT posLat, posLon, descriptionSon FROM son WHERE idSon = ?";
+$sql = "SELECT lieuLat, lieuLon, sonDescription FROM son WHERE sonId = ?";
 $stmt = $mysqli->prepare($sql);
 $stmt->bind_param("i", $idSon);
 $stmt->execute();
@@ -23,10 +23,9 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-
-    $data['posLat'] = $row['posLat'];
-    $data['posLon'] = $row['posLon'];
-    $data['descriptionSon'] = $row['descriptionSon'];
+    $data['lieuLat'] = $row['lieuLat'];
+    $data['lieuLon'] = $row['lieuLon'];
+    $data['sonDescription'] = $row['sonDescription'];
 } else {
     $data['error'] = "Aucun son trouvé en bdd.";
 }

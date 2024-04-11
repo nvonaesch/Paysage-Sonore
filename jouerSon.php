@@ -12,14 +12,14 @@ if ($idSon <= 0) {
     exit;
 }
 
-$sql = "SELECT blobSon FROM son WHERE idSon = $idSon";
+$sql = "SELECT sonBin   FROM son WHERE sonId = $idSon";
 $stmt = $mysqli->prepare($sql);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $son = $row["blobSon"];
+    $son = $row["sonBin"];
 
     $temp_file = tempnam(sys_get_temp_dir(), 'sound');
     file_put_contents($temp_file, $son);

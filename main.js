@@ -17,18 +17,19 @@ function initMap(){
     console.log($("#carte").val());
     switch($("#carte").val()){
         case 'ensim':
-            map = L.map('map').setView([48.01675, 0.16000], 16.2);
+            map = L.map('map').setView([48, 0.155], 16.5);
 
             var imageUrl = 'https://raw.githubusercontent.com/nvonaesch/SoundGuessr/main/plan_ensim.png';
-            var imageBounds = [[48.01, 0.15], [48.0, 0.175]];
+            var imageBounds = [[48.0202384376636, 0.15263914776527002], [48.01398617421952, 0.16866589672434265]];
             L.imageOverlay(imageUrl, imageBounds).addTo(map);
-            L.maxZoom = 12;
-            L.minZoom = 12;
             var mybounds = L.latLngBounds(imageBounds[0], imageBounds[1]);
             map.setMaxBounds(mybounds);
+
             break;
+
         case 'univ':
             map = L.map('map').setView([48.01675, 0.16000], 16);
+            
             var corner1 = L.latLng(48.020192681819545, 0.15203201842398748);
             var corner2 = L.latLng(48.013931363239564, 0.16932292283386483);
             var mybounds = L.latLngBounds(corner1,corner2);
@@ -43,12 +44,16 @@ function initMap(){
 }
 
 function ajouterMarqueur(event) {
+    if(marqueurs.length>0){
+        removeMarqueur(marqueurs[0]);
+    }
     var latlng = map.mouseEventToLatLng(event.originalEvent);
+    console.log(latlng);
     var marker = L.marker(latlng).addTo(map);
     marqueurs.push(marker);
-    setTimeout(function() {
-        removeMarqueur(marker);
-    }, 5000);
+    //  setTimeout(function() {
+    //      removeMarqueur(marker);
+    // }, 5000);
 }
 
 function removeMarqueur(marker) {
@@ -72,6 +77,7 @@ function executerScripEnvoiSon(){
     });
 }
 
+
 function executerScriptJouerSon(){
     var url = 'jouerSon.php?idSon=' + idSon;
     var audioElement = document.createElement('audio');
@@ -86,7 +92,7 @@ function executerScriptJouerSon(){
     audioElement.play();
 }
 
-function executerScriptDonneesSon(){
+function executerScriptDonneesSon(callback){
     var donnees = {
         idSon: idSon
     };
@@ -96,10 +102,12 @@ function executerScriptDonneesSon(){
         type: "GET",
         data: donnees, 
         success: function(response){
+            $("#map").off('click');
             objReponse = JSON.parse(response);
-             $("#descriptionContainer").text(objReponse.descriptionSon);
-            // $("#descriptionContainer").text(objReponse.posLat);
-            // $("#descriptionContainer").text(objReponse.posLon);
+            $("#descriptionContainer").text(objReponse.sonDescription);
+            var pos = L.latLng(objReponse.lieuLat, objReponse.lieuLon);
+            var marker = L.marker(pos).addTo(map).bindPopup(objReponse.sonDescription);
+            $("#map").click(ajouterMarqueur);
         },
         error: function(xhr, status, error){
             console.error(xhr.responseText);
