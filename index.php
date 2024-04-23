@@ -23,6 +23,7 @@
     <button id="uploadButton" type="button">Upload Sound</button>
     <button id="playButton" type="button">Play Sound</button>
     <button id="dataButton" type="button">Obtenir Données</button>
+    <button id="nextSoundButton" type="button">Passer au prochain sons</button>
     <div id="map"></div>
     <script src="main.js"></script>
 </body>
