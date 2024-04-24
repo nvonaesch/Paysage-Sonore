@@ -11,11 +11,7 @@ var idSon = 1, objReponse;
 $(document).ready(function (){
     $("#validateButton").click(initMap);
     $("#map").click(ajouterMarqueur);
-
     //$("#map").click(genererIdSon);
-
-    $("#map").click(genererIdSon);
-
     $("#uploadButton").click(executerScripEnvoiSon);
     $("#playButton").click(executerScriptJouerSon);
     $("#dataButton").click(executerScriptDonneesSon);
@@ -30,8 +26,6 @@ function initMap(){
             map = L.map('map').setView([48, 0.155], 16.5);
 
             var imageUrl = 'https://raw.githubusercontent.com/nvonaesch/SoundGuessr/main/ENSIM.png';
-
-            var imageUrl = 'https://raw.githubusercontent.com/nvonaesch/SoundGuessr/main/plan_ensim.png';
 
             var imageBounds = [[48.0202384376636, 0.15263914776527002], [48.01398617421952, 0.16866589672434265]];
             L.imageOverlay(imageUrl, imageBounds).addTo(map);
@@ -84,7 +78,6 @@ function executerScripEnvoiSon(){
         success: function(response){
             console.log(response);
         },
-
         error: function(xhr){
             console.error(xhr.responseText);
         }
