@@ -11,7 +11,6 @@ var idSon = 1, objReponse;
 $(document).ready(function (){
     $("#validateButton").click(initMap);
     $("#map").click(ajouterMarqueur);
-    //$("#map").click(genererIdSon);
     $("#uploadButton").click(executerScripEnvoiSon);
     $("#playButton").click(executerScriptJouerSon);
     $("#dataButton").click(executerScriptDonneesSon);
