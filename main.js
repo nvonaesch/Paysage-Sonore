@@ -1,11 +1,8 @@
 //Variables Globales
-var map, marqueurs=[];
+var map, marqueurs=[], formes=[];
 var idSon = 1, objReponse, cercle;
 
 // Difficile -> 10 / Normal -> 35 / Facile -> 65
-
-var idSon = 1, objReponse;
-
 
 //Définitions des events
 $(document).ready(function (){
@@ -14,6 +11,8 @@ $(document).ready(function (){
     $("#uploadButton").click(executerScripEnvoiSon);
     $("#playButton").click(executerScriptJouerSon);
     $("#dataButton").click(executerScriptDonneesSon);
+    $("#nextSoundButton").click(prepareNextRound);
+
 });
 
 //Fonctions
@@ -57,9 +56,6 @@ function ajouterMarqueur(event) {
     console.log(latlng);
     var marker = L.marker(latlng).addTo(map);
     marqueurs.push(marker);
-    //  setTimeout(function() {
-    //      removeMarqueur(marker);
-    // }, 5000);
 }
 
 function removeMarqueur(marker) {
@@ -111,7 +107,9 @@ function ajouterCercle(){
         fillOpacity: 0.5,
         radius: calculerDistance()
     }).addTo(map);
+    formes.push(cercle);
 }
+
 
 function executerScriptDonneesSon(){
     var donnees = {
@@ -129,7 +127,6 @@ function executerScriptDonneesSon(){
             var pos = L.latLng(objReponse.lieuLat, objReponse.lieuLon);
             var marker = L.marker(pos).addTo(map).bindPopup(objReponse.sonDescription);
             marqueurs.push(marker);
-            //$("#map").click(ajouterMarqueur);
             ajouterCercle();
         },
         error: function(xhr){
@@ -138,11 +135,21 @@ function executerScriptDonneesSon(){
     });
 }
 
+function prepareNextRound(){
+    removeMarqueur(marqueurs[0]);
+    removeMarqueur(marqueurs[0]);
+    removeCircle();
+    $("#map").click(ajouterMarqueur);
+}
 
 function getApproximation(min, max) {
     return Math.random() * (max - min) + min;
 }
 
+function removeCircle(){
+    map.removeLayer(formes[0]);
+    formes.pop();
+}
 
 function genererIdSon(){
     idSon = Math.floor(50*Math.random());
