@@ -1,6 +1,6 @@
 //Variables Globales
 var map, marqueurs=[], formes=[];
-var idSon = 1, objReponse, cercle;
+var idSon = 1, objReponse, cercle, distanceDifficulte=65;
 
 // Difficile -> 10 / Normal -> 35 / Facile -> 65
 
@@ -95,19 +95,30 @@ function executerScriptJouerSon(){
 }
 
 function calculerDistance(){
-    let distance = map.distance(marqueurs[0].getLatLng(),marqueurs[1].getLatLng())    
+    var pos = L.latLng(objReponse.lieuLat, objReponse.lieuLon);
+    var marker = L.marker(pos);
+    let distance = map.distance(marqueurs[0].getLatLng(),marker.getLatLng());    
+    marqueurs.push(marker);
     console.log(distance);
-    distance = 65;
     return distance;
 }
 
-function ajouterCercle(){
+function ajouterCercle(distance){
     cercle = L.circle(marqueurs[0].getLatLng(), {
         color: 'red',
-        fillOpacity: 0.5,
-        radius: calculerDistance()
+        fillOpacity: 0.1,
+        radius: distance+getApproximation(-40,40)
     }).addTo(map);
     formes.push(cercle);
+}
+
+function verifierPosSon(){
+    distance = calculerDistance();
+    if(distance < distanceDifficulte){
+        marqueurs[1].addTo(map).bindPopup(objReponse.sonDescription).openPopup();
+    } else {
+        ajouterCercle(distance);
+    }
 }
 
 
@@ -124,10 +135,7 @@ function executerScriptDonneesSon(){
             $("#map").off('click');
             objReponse = JSON.parse(response);
             $("#descriptionContainer").text(objReponse.sonDescription);
-            var pos = L.latLng(objReponse.lieuLat, objReponse.lieuLon);
-            var marker = L.marker(pos).addTo(map).bindPopup(objReponse.sonDescription);
-            marqueurs.push(marker);
-            ajouterCercle();
+            verifierPosSon();
         },
         error: function(xhr){
             console.error(xhr.responseText);
