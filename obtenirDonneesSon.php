@@ -5,8 +5,8 @@ if ($mysqli->connect_error) {
     die('Erreur de connexion à la base de données : ' . $mysqli->connect_error);
 }
 
-$idSon = isset($_GET['idSon']) ? intval($_GET['idSon']) : 0;
-$carteUtilisee = isset($_GET['carteUtilisee']) ? intval($_GET['carteUtilisee']) : 0;
+$loginUser = isset($_GET['loginUser']) ? $_GET['loginUser'] : '';
+$scoreUser = isset($_GET['scoreUser']) ? intval($_GET['scoreUser']) : 0;
 $dureeSon = isset($_GET['dureeSon']) ? intval($_GET['dureeSon']) : 0;
 
 if ($idSon <= 0) {
@@ -16,7 +16,7 @@ if ($idSon <= 0) {
 
 $data = array();
 
-$sql = "SELECT lieuLat, lieuLon, sonDescription FROM son WHERE sonId = ? AND carteUtilisee = ? AND sonDuree = ?";
+$sql = "SELECT lieuLat, lieuLon, sonDescription, latRectHG, lonRectHG, latRectBD, lonRectBD FROM son WHERE sonId = ? AND carteUtilisee = ? AND sonDuree = ?";
 $stmt = $mysqli->prepare($sql);
 $stmt->bind_param("iii", $idSon, $carteUtilisee, $dureeSon);
 $stmt->execute();

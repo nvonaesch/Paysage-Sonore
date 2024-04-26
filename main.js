@@ -1,6 +1,6 @@
 //Variables Globales
 var map, marqueurs=[], formes=[];
-var idSon = 1,carteUtilisee = 1, dureeSon = 3, objReponse, cercle, distanceDifficulte=65;
+var idSon = 2,carteUtilisee = 1, dureeSon = 3, cercle, distanceDifficulte=65;
 // Difficile -> 10 / Normal -> 35 / Facile -> 65
 
 //Définitions des events
@@ -93,7 +93,7 @@ function executerScriptJouerSon(){
     audioElement.play();
 }
 
-function calculerDistance(){
+function calculerDistance(objReponse){
     var pos = L.latLng(objReponse.lieuLat, objReponse.lieuLon);
     var marker = L.marker(pos);
     let distance = map.distance(marqueurs[0].getLatLng(),marker.getLatLng());    
@@ -111,21 +111,31 @@ function ajouterCercle(distance){
     formes.push(cercle);
 }
 
-function verifierPosSon(){
-    distance = calculerDistance();
-    if(distance < distanceDifficulte){
-        marqueurs[1].addTo(map).bindPopup(objReponse.sonDescription).openPopup();
-    } else {
-        ajouterRectangle();
+function verifierPosSon(objReponse){
+    switch(carteUtilisee){
+        case 1:
+            calculerDistance(objReponse);
+            ajouterRectangle(objReponse)
+            if(formes[0].getBounds().contains(marqueurs[0].getLatLng())){
+                ajouterRectangle(objReponse)
+                marqueurs[1].addTo(map).bindPopup(objReponse.sonDescription).openPopup();
+                map.flyTo(marqueurs[1].getLatLng(), 19);
+            }
+            break;
+        case 2:
+
+
+            break;
     }
+    distance = calculerDistance(objReponse);
 }
 
-function ajouterRectangle(){
-    var bounds = [[48.014950939638,0.1576066017150],[48.014580430234,0.16518115997314]];
+function ajouterRectangle(objReponse){
+    var bounds = [[objReponse.latRectHG,objReponse.lonRectHG],[objReponse.latRectBD,objReponse.lonRectBD]];
     rectangle = L.rectangle(bounds, {
         color: 'red',
         fillOpacity: 0.1,
-    }).addTo(map);
+    });
     formes.push(rectangle);
 }
 
@@ -143,9 +153,9 @@ function executerScriptDonneesSon(){
         data: donnees, 
         success: function(response){
             $("#map").off('click');
-            objReponse = JSON.parse(response);
+            let objReponse = JSON.parse(response);
             $("#descriptionContainer").text(objReponse.sonDescription);
-            verifierPosSon();
+            verifierPosSon(objReponse);
         },
         error: function(xhr){
             console.error(xhr.responseText);
@@ -154,6 +164,7 @@ function executerScriptDonneesSon(){
 }
 
 function prepareNextRound(){
+    executerScriptEnvoiScore();
     for(index = 0; index<marqueurs.length;index){
         removeMarqueur(marqueurs[index]);
     }
@@ -173,4 +184,22 @@ function removeCircle(){
 function genererIdSon(){
     idSon = Math.floor(50*Math.random());
     console.log(idSon);
+}
+
+function getScore(){
+
+}
+
+function executerScriptEnvoiScore(){
+    let loginUser = 'totot75', score = 6565;
+    $.ajax({
+        url: "sendScore.php?loginUser=" + loginUser + '&scoreUser=' + score,
+        type: "POST",
+        success: function(response){
+            console.log(response);
+        },
+        error: function(xhr){
+            console.error(xhr.responseText);
+        }
+    });
 }
