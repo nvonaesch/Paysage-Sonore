@@ -6,13 +6,15 @@ if ($mysqli->connect_error) {
 }
 
 $idSon = isset($_GET['idSon']) ? intval($_GET['idSon']) : 0;
+$carteUtilisee = isset($_GET['carteUtilisee']) ? intval($_GET['carteUtilisee']) : 0;
+$dureeSon = isset($_GET['dureeSon']) ? intval($_GET['dureeSon']) : 0;
 
 if ($idSon <= 0) {
     echo json_encode(array('error' => 'ID de son invalide.'));
     exit;
 }
 
-$sql = "SELECT sonBin   FROM son WHERE sonId = $idSon";
+$sql = "SELECT sonBin FROM son WHERE sonId = $idSon AND carteUtilisee = $carteUtilisee AND sonDuree = $dureeSon";
 $stmt = $mysqli->prepare($sql);
 $stmt->execute();
 $result = $stmt->get_result();

@@ -1,7 +1,6 @@
 //Variables Globales
 var map, marqueurs=[], formes=[];
-var idSon = 1, objReponse, cercle, distanceDifficulte=65;
-
+var idSon = 1,carteUtilisee = 1, dureeSon = 3, objReponse, cercle, distanceDifficulte=65;
 // Difficile -> 10 / Normal -> 35 / Facile -> 65
 
 //Définitions des events
@@ -81,7 +80,7 @@ function executerScripEnvoiSon(){
 
 
 function executerScriptJouerSon(){
-    var url = 'jouerSon.php?idSon=' + idSon;
+    var url = 'jouerSon.php?idSon=' + idSon + '&carteUtilisee=' + carteUtilisee + '&dureeSon=' + dureeSon;
     var audioElement = document.createElement('audio');
 
     if (audioContainer.firstChild) {
@@ -117,14 +116,25 @@ function verifierPosSon(){
     if(distance < distanceDifficulte){
         marqueurs[1].addTo(map).bindPopup(objReponse.sonDescription).openPopup();
     } else {
-        ajouterCercle(distance);
+        ajouterRectangle();
     }
+}
+
+function ajouterRectangle(){
+    var bounds = [[48.014950939638,0.1576066017150],[48.014580430234,0.16518115997314]];
+    rectangle = L.rectangle(bounds, {
+        color: 'red',
+        fillOpacity: 0.1,
+    }).addTo(map);
+    formes.push(rectangle);
 }
 
 
 function executerScriptDonneesSon(){
     var donnees = {
-        idSon: idSon
+        idSon: idSon,
+        carteUtilisee: carteUtilisee,
+        dureeSon: dureeSon
     };
 
     $.ajax({
@@ -144,8 +154,9 @@ function executerScriptDonneesSon(){
 }
 
 function prepareNextRound(){
-    removeMarqueur(marqueurs[0]);
-    removeMarqueur(marqueurs[0]);
+    for(index = 0; index<marqueurs.length;index){
+        removeMarqueur(marqueurs[index]);
+    }
     removeCircle();
     $("#map").click(ajouterMarqueur);
 }
