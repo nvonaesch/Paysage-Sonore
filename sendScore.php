@@ -1,39 +1,57 @@
 <?php
-$mysqli = new mysqli('localhost', 'root', '', 'projettransversaux');
-
-if ($mysqli->connect_error) {
-    die('Erreur de connexion à la base de données : ' . $mysqli->connect_error);
+$conn = new mysqli('localhost', 'root', '', 'projettransversaux');
+if ($conn->connect_error) {
+    die("La connexion a échoué : " . $conn->connect_error);
 }
 
-$loginUser = isset($_GET['loginUser']) ? $_GET['loginUser'] : '';
-$scoreUser = isset($_GET['scoreUser']) ? intval($_GET['scoreUser']) : 0;
-$pattern = '/^[a-zA-Z]{5}[0-9]{2}$/';
+$user = isset($_POST['loginUser']) ? $conn->real_escape_string($_POST['loginUser']) : NULL;
+$carte = isset($_POST['carteUtilisee']) ? intval($_POST['carteUtilisee']) : 0;
+$score = isset($_POST['scoreUser']) ? intval($_POST['scoreUser']) : 0;
 
-if(preg_match($pattern, $loginUser)){
+if ($user === NULL || $carte === 0 || $score === 0) {
+    die("Paramètres manquants ou invalides.");
+}
 
-    $sql = "INSERT INTO utilisateur (nom) VALUES (?) ON DUPLICATE KEY UPDATE nom = VALUES(nom)";
-    $stmt = $mysqli->prepare($sql);
-    $stmt->bind_param("s", $loginUser);
-    if ($stmt->execute()) {
-        echo "success.";
+$sql_count = "SELECT COUNT(*) AS nbScores FROM score WHERE userLogin = '$user' AND carteUtilisee = $carte";
+
+$cptResultat = $conn->query($sql_count);
+
+if ($cptResultat) {
+    $cptLigne = $cptResultat->fetch_assoc();
+    $nbScores = $cptLigne['nbScores'];
+    
+    if ($nbScores == 5) {
+        $sql_min_score = "SELECT MIN(score) AS scoreMin FROM score WHERE userLogin = '$user' AND carteUtilisee = $carte";
+        $result_min_score = $conn->query($sql_min_score);
+        
+        if ($result_min_score) {
+            $row_min_score = $result_min_score->fetch_assoc();
+            $scoreMin = $row_min_score['scoreMin'];
+
+            if ($score > $scoreMin) {
+                $updateScore = "UPDATE score SET score = $score WHERE userLogin = '$user' AND carteUtilisee = $carte AND score = $scoreMin";
+                if ($conn->query($updateScore) === TRUE) {
+                    echo "successLow";
+                } else {
+                    echo "erreurRemplacementMinimum" . $conn->error;
+                }
+            } else {
+                echo "scorePlusPetitQueMinimum";
+            }
+        } else {
+            echo "erreurExecutionRequete";
+        }
     } else {
-        echo "ff " . $stmt->error;
+        $sql_insert_score = "INSERT INTO score (userLogin, score, carteUtilisee) VALUES ('$user', $score, $carte)";
+        if ($conn->query($sql_insert_score) === TRUE) {
+            echo "Score inséré avec succès.";
+        } else {
+            echo "erreurInsertionScore";
+        }
     }
-    $stmt->close();
-
-    $sql = "INSERT INTO scores (user_id, score) VALUES ((SELECT id FROM utilisateur WHERE nom = ?), ?)";
-    $stmt2 = $mysqli->prepare($sql);
-    $stmt2->bind_param("si", $loginUser, $scoreUser);
-    if ($stmt2->execute()) {
-        echo "success.";
-    } else {
-        echo "ff" . $stmt2->error;
-    }
-    $stmt2->close();
-
 } else {
-    echo "L'envoi a échoué, le login n'est pas sous la bonne forme";
+    echo "erreurExecutionRequeteComptage";
 }
 
-$mysqli->close();
+$conn->close();
 ?>
