@@ -2,22 +2,70 @@
 var map, marqueurs = [], formes = [];
 var idSon, carteUtilisee, dureeSon, nbTentatives, nbSons, identifiant = null;
 var idsUtilises = [];
-var boutonConfirmeClique = false;
+var boutonConfirmeClique = false, boutonNextClique = false;
+
 
 $(document).ready(function () {
-    $("#playButton").click(initGame);
+    $('.container').show();
+    $('.container2').show();
+    $('.container3').show();
+    slider();
+    $(".playButton").click(function() {
+        if (validateIdentifiant()) {
+            $("#identifiant").remove();
+            $("#play").remove();
+            $("#background").remove();
+            initGame();
+        }
+    });
     $("#nextSoundButton").click(prepareNextRound);
     $("#validateButton").click(function () {
         boutonConfirmeClique = true;
     });
-    // $("#uploadButton").click(executerScripEnvoiSon);
+    $("#nextSoundButton").click(function () {
+        boutonNextClique = true;
+    });
+    $("#rankButton").click(toggleClassement);
 });
+
+function slider() {
+    const mySlider = document.getElementById("sliderDureeSons");
+    const sliderValue = document.getElementById("slider-value");
+    const mySlider2 = document.getElementById("sliderNbSons");
+    const sliderValue2 = document.getElementById("slider-value2");
+    const mySlider3 = document.getElementById("sliderNbTentatives");
+    const sliderValue3 = document.getElementById("slider-value3");
+
+    valPercent = (mySlider.value / mySlider.max) * 100;
+    mySlider.style.background = `linear-gradient(to right, #3264fe ${valPercent}%, #d5d5d5 ${valPercent}%)`;
+    sliderValue.textContent = mySlider.value;
+    
+    valPercent2 = (mySlider2.value / mySlider2.max) * 100;
+    mySlider2.style.background = `linear-gradient(to right, #3264fe ${valPercent2}%, #d5d5d5 ${valPercent2}%)`;
+    sliderValue2.textContent = mySlider2.value;
+    
+    valPercent3 = (mySlider3.value / mySlider3.max) * 100;
+    mySlider3.style.background = `linear-gradient(to right, #3264fe ${valPercent3}%, #d5d5d5 ${valPercent3}%)`;
+    sliderValue3.textContent = mySlider3.value;
+}//used merdique faite par Léo -> 0/20
+
+function validateIdentifiant() {
+    const identifiantPattern = /^[a-zA-Z]{5}\d{2}$/;
+    identifiant = $("#myInput").val();
+
+    if (!identifiantPattern.test(identifiant)) {
+        alert("Identifiant invalide. Il doit être composé de 5 caractères suivis de 2 chiffres.");
+        return false;
+    }
+
+    return true;
+}//used
 
 function initGame() {
     let j = 0, objReponse, score = 0;
     initMap();
     initParams();
-    $("#map").click(ajouterMarqueur); // Activation de la possibilité de poser un marqueur
+    $("#map").off('click', ajouterMarqueur).on('click', ajouterMarqueur);
 
     function waitForConfirmation() {
         return new Promise(resolve => {
@@ -27,6 +75,19 @@ function initGame() {
                     resolve();
                 } else {
                     setTimeout(checkButton, 1); 
+                }
+            })();
+        });
+    }
+
+    function waitForNextButton() {
+        return new Promise(resolve => {
+            (function checkButton() {
+                if (boutonNextClique) {
+                    boutonNextClique = false;
+                    resolve();
+                } else {
+                    setTimeout(checkButton, 1);
                 }
             })();
         });
@@ -43,6 +104,7 @@ function initGame() {
                 objReponse = await executerScriptDonneesSon();
                 ajouterRectangle(objReponse);
                 if(verifierPosSon(objReponse)){
+                    formes[0].addTo(map);
                     score = score + addScore(i);
                     i=nbTentatives;
                 } else {
@@ -51,15 +113,15 @@ function initGame() {
                 console.log(score);
                 console.log(objReponse);
             }
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            prepareNextRound()//TODO
+            await waitForNextButton();
+            prepareNextRound();
             j++;
         }
         executerScriptEnvoiScore(score);
     }
 
     gameLoop(); // Boucle de jeu
-}
+}//used
 
 function initParams(){
     switch($("#carte").val()){
@@ -86,7 +148,7 @@ function initMap(){
     switch($("#carte").val()){
         case 'ensim':
             map = L.map('map').setView([48, 0.155], 16.5);
-            var imageUrl = 'https://raw.githubusercontent.com/nvonaesch/SoundGuessr/main/ENSIM.png';
+            var imageUrl = 'https://raw.githubusercontent.com/nvonaesch/SoundGuessr/main/ENSIM_Colorie.png';
             var imageBounds = [[48.0202384376636, 0.15263914776527002], [48.01398617421952, 0.16866589672434265]];
             L.imageOverlay(imageUrl, imageBounds).addTo(map);
             var mybounds = L.latLngBounds(imageBounds[0], imageBounds[1]);
@@ -148,7 +210,7 @@ function ajouterRectangle(objReponse){
     rectangle = L.rectangle(bounds, {
         color: 'red',
         fillOpacity: 0.1,
-    }).addTo(map);
+    });
     formes.push(rectangle);
 }//used
 
@@ -236,17 +298,19 @@ function addScore(tentaActuelle){
     score = score / tentaActuelle;
     console.log("Tentative ajout score: "+ score);
     return score;
-}
+}//used
 
-function prepareNextRound(){
+function prepareNextRound() {
     while (marqueurs.length > 0) {
         removeMarqueur(marqueurs[0]);
     }
     if (formes.length > 0) {
         map.removeLayer(formes.pop());
     }
-    $("#map").click(ajouterMarqueur); // Réactiver la possibilité de poser un marqueur
-}
+
+    // Détacher tout écouteur précédent et en attacher un nouveau
+    $("#map").off('click', ajouterMarqueur).on('click', ajouterMarqueur);
+}//used
 
 function executerScriptEnvoiScore(score) {
     const data = {
@@ -267,8 +331,40 @@ function executerScriptEnvoiScore(score) {
             console.error(xhr.responseText);
         }
     });
-}
+}//used
 
+function toggleClassement() {
+    let classementContainer = $("#classementContainer");
+    
+    if (classementContainer.is(":visible")) {
+        classementContainer.hide();
+    } else {
+        executerScriptObtentionClassement();
+    }
+}//used
+
+function executerScriptObtentionClassement() {
+    $.ajax({
+        url: "getClassement.php",
+        type: "GET", 
+        success: function(response) {
+            let classement = JSON.parse(response);
+            afficherClassement(classement);
+            $("#classementContainer").show();
+        },
+        error: function(xhr) {
+            console.error(xhr.responseText);
+        }
+    });
+}//used
+
+function afficherClassement(classement) {
+    let classementContainer = $("#classementContainer");
+    classementContainer.empty(); 
+    classement.forEach((entry, index) => {
+        classementContainer.append(`<div>${index + 1}. ${entry.userLogin} - ${entry.score}</div>`);
+    });
+}//used
 
 // function executerScripEnvoiSon(){
 //     $.ajax({

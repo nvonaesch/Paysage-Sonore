@@ -8,49 +8,57 @@ $user = isset($_POST['loginUser']) ? $conn->real_escape_string($_POST['loginUser
 $carte = isset($_POST['carteUtilisee']) ? intval($_POST['carteUtilisee']) : 0;
 $score = isset($_POST['scoreUser']) ? intval($_POST['scoreUser']) : 0;
 
-if ($user === NULL || $carte === 0 || $score === 0) {
-    die("Paramètres manquants ou invalides.");
+function validateIdentifiant($identifiant) {
+    return preg_match('/^[a-zA-Z]{5}\d{2}$/', $identifiant);
 }
 
-$sql_count = "SELECT COUNT(*) AS nbScores FROM score WHERE userLogin = '$user' AND carteUtilisee = $carte";
+if ($user && $carte) {
+    if (!validateIdentifiant($user)) {
+        die("Identifiant invalide. Il doit être composé de 5 caractères suivis de 2 chiffres.");
+    }
 
-$cptResultat = $conn->query($sql_count);
+    $sql_count = "SELECT COUNT(*) AS nbScores FROM score WHERE userLogin = '$user' AND carteUtilisee = $carte";
+    $cptResultat = $conn->query($sql_count);
 
-if ($cptResultat) {
-    $cptLigne = $cptResultat->fetch_assoc();
-    $nbScores = $cptLigne['nbScores'];
-    
-    if ($nbScores == 5) {
-        $sql_min_score = "SELECT MIN(score) AS scoreMin FROM score WHERE userLogin = '$user' AND carteUtilisee = $carte";
-        $result_min_score = $conn->query($sql_min_score);
-        
-        if ($result_min_score) {
-            $row_min_score = $result_min_score->fetch_assoc();
-            $scoreMin = $row_min_score['scoreMin'];
+    if ($cptResultat) {
+        $cptLigne = $cptResultat->fetch_assoc();
+        $nbScores = $cptLigne['nbScores'];
 
-            if ($score > $scoreMin) {
-                $updateScore = "UPDATE score SET score = $score WHERE userLogin = '$user' AND carteUtilisee = $carte AND score = $scoreMin";
-                if ($conn->query($updateScore) === TRUE) {
-                    echo "successLow";
+        if ($nbScores >= 5) {
+            $sql_min_score = "SELECT id, score FROM score WHERE userLogin = '$user' AND carteUtilisee = $carte ORDER BY score ASC LIMIT 1";
+            $result_min_score = $conn->query($sql_min_score);
+
+            if ($result_min_score) {
+                $row_min_score = $result_min_score->fetch_assoc();
+                $scoreMin = $row_min_score['score'];
+                $minScoreId = $row_min_score['id'];
+
+                if ($score > $scoreMin) {
+                    $updateScore = "UPDATE score SET score = $score WHERE id = $minScoreId";
+                    if ($conn->query($updateScore) === TRUE) {
+                        echo "Score mis à jour avec succès.";
+                    } else {
+                        echo "Erreur lors de la mise à jour du score: " . $conn->error;
+                    }
                 } else {
-                    echo "erreurRemplacementMinimum" . $conn->error;
+                    echo "Le nouveau score est inférieur ou égal au score minimum actuel.";
                 }
             } else {
-                echo "scorePlusPetitQueMinimum";
+                echo "Erreur lors de la récupération du score minimum: " . $conn->error;
             }
         } else {
-            echo "erreurExecutionRequete";
+            $sql_insert_score = "INSERT INTO score (userLogin, score, carteUtilisee) VALUES ('$user', $score, $carte)";
+            if ($conn->query($sql_insert_score) === TRUE) {
+                echo "Score inséré avec succès.";
+            } else {
+                echo "Erreur lors de l'insertion du score: " . $conn->error;
+            }
         }
     } else {
-        $sql_insert_score = "INSERT INTO score (userLogin, score, carteUtilisee) VALUES ('$user', $score, $carte)";
-        if ($conn->query($sql_insert_score) === TRUE) {
-            echo "Score inséré avec succès.";
-        } else {
-            echo "erreurInsertionScore";
-        }
+        echo "Erreur lors de la récupération du nombre de scores: " . $conn->error;
     }
 } else {
-    echo "erreurExecutionRequeteComptage";
+    echo "Paramètres manquants.";
 }
 
 $conn->close();
