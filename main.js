@@ -346,15 +346,26 @@ function executerScriptEnvoiScore(score) {
 }//used
 
 function afficherAlerteErreur() {
+    $("#param").addClass("hidden-elements");
+    $("#containerGlobal").addClass("hidden-elements");
+    $("#select").addClass("hidden-elements");
+    $("#identifiant").addClass("hidden-elements");
+
     Swal.fire({
         title: 'Erreur',
         text: 'Vous vous êtes trompé.',
         icon: 'error',
-        timer: 1500, // Afficher l'alerte pendant 1,5 seconde
+        timer: 1500, 
         timerProgressBar: true,
         showConfirmButton: false
+    }).then(() => {
+        $("#param").removeClass("hidden-elements");
+        $("#containerGlobal").removeClass("hidden-elements");
+        $("#select").removeClass("hidden-elements");
+        $("#identifiant").removeClass("hidden-elements");
     });
 }
+
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -363,7 +374,7 @@ function sleep(ms) {
 function executerScriptObtentionClassement() {
     $.ajax({
         url: "getClassement.php",
-        type: "GET", 
+        type: "GET",
         success: function(response) {
             let classement = JSON.parse(response);
             afficherClassement(classement);

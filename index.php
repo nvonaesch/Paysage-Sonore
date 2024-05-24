@@ -7,10 +7,10 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="js/libs/leaflet/leaflet.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/sweetalert2@11.3.9/dist/sweetalert2.min.css">
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/libs/leaflet/leaflet.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div id="background"></div>
