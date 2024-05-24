@@ -1,20 +1,24 @@
+//TODO CLASSEMENT PAR CARTE
+
 // Variables Globales
 var map, marqueurs = [], formes = [];
 var idSon, carteUtilisee, dureeSon, nbTentatives, nbSons, identifiant = null;
 var idsUtilises = [];
 var boutonConfirmeClique = false, boutonNextClique = false;
 
-
 $(document).ready(function () {
+    $('body').css('overflow', 'hidden');
+    $("#containerGlobal").hide();
     $('.container').show();
     $('.container2').show();
     $('.container3').show();
     slider();
     $(".playButton").click(function() {
         if (validateIdentifiant()) {
-            $("#identifiant").remove();
-            $("#play").remove();
-            $("#background").remove();
+            $("#identifiant").hide();
+            $("#play").hide();
+            $("#background").hide();
+            $("#containerGlobal").show();
             initGame();
         }
     });
@@ -25,13 +29,14 @@ $(document).ready(function () {
     $("#nextSoundButton").click(function () {
         boutonNextClique = true;
     });
-    $("#rankButton").click(toggleClassement);
+    $("#rankButton").click(executerScriptObtentionClassement);
+    // $("#uploadButton").click(executerScripEnvoiSon);
 });
 
 function slider() {
-    const mySlider = document.getElementById("sliderDureeSons");
+    const mySlider = document.getElementById("sliderNbSons");
     const sliderValue = document.getElementById("slider-value");
-    const mySlider2 = document.getElementById("sliderNbSons");
+    const mySlider2 = document.getElementById("sliderDureeSons");
     const sliderValue2 = document.getElementById("slider-value2");
     const mySlider3 = document.getElementById("sliderNbTentatives");
     const sliderValue3 = document.getElementById("slider-value3");
@@ -51,7 +56,7 @@ function slider() {
 
 function validateIdentifiant() {
     const identifiantPattern = /^[a-zA-Z]{5}\d{2}$/;
-    identifiant = $("#myInput").val();
+    identifiant = $("#myInput").val(); //Récupérer l'identifiant de l'utilisateur
 
     if (!identifiantPattern.test(identifiant)) {
         alert("Identifiant invalide. Il doit être composé de 5 caractères suivis de 2 chiffres.");
@@ -97,27 +102,34 @@ function initGame() {
         while (j < nbSons) { //Boucle Partie
             idSon = genererIdSon(); 
             executerScriptJouerSon(); 
+            $("#nextSoundButton").hide();
+            $("#validateButton").show();
             for (let i = 1; i <= nbTentatives; i++) { //Un Son
                 console.log("Itération Tentative : "+i);
+                $("#tentativeText").text(`Tentative ${i}/${nbTentatives} |  Score: ${score} | Sons ${j+1}/${nbSons}`);
                 await waitForConfirmation();
-                //$("#map").off('click');
                 objReponse = await executerScriptDonneesSon();
-                ajouterRectangle(objReponse);
+                ajouterRectangle(objReponse);   
                 if(verifierPosSon(objReponse)){
                     formes[0].addTo(map);
                     score = score + addScore(i);
+                    $("#tentativeText").text(`Tentative ${i}/${nbTentatives} |  Score: ${score} | Sons ${j+1}/${nbSons}`);
                     i=nbTentatives;
                 } else {
-                    console.log("Pas le bon emplacement");
+                    afficherAlerteErreur();
+                    await sleep(1500);
                 }
                 console.log(score);
                 console.log(objReponse);
             }
+            $("#nextSoundButton").show();
+            $("#validateButton").hide();
             await waitForNextButton();
             prepareNextRound();
             j++;
         }
         executerScriptEnvoiScore(score);
+        resetGame();
     }
 
     gameLoop(); // Boucle de jeu
@@ -138,7 +150,6 @@ function initParams(){
     dureeSon = $("#sliderDureeSons").val(); //Récupérer la durée des sons souhaitée
     dureeSon = dureeSon / 10;
     nbSons = parseInt($("#sliderNbSons").val()); //Récupérer le nombre de sons pour cette partie
-    identifiant = $("#inputIdentifiant").val(); //Récupérer l'identifiant de l'utilisateur
     console.log("Nbtentatives: "+ nbTentatives + " DureeSon: "+ dureeSon + " nbSons: "+ nbSons + " Identifiant: "+ identifiant);
 }//used
 
@@ -148,7 +159,7 @@ function initMap(){
     switch($("#carte").val()){
         case 'ensim':
             map = L.map('map').setView([48, 0.155], 16.5);
-            var imageUrl = 'https://raw.githubusercontent.com/nvonaesch/SoundGuessr/main/ENSIM_Colorie.png';
+            var imageUrl = 'https://raw.githubusercontent.com/nvonaesch/SoundGuessr/main/ENSIMversionFinale.png';
             var imageBounds = [[48.0202384376636, 0.15263914776527002], [48.01398617421952, 0.16866589672434265]];
             L.imageOverlay(imageUrl, imageBounds).addTo(map);
             var mybounds = L.latLngBounds(imageBounds[0], imageBounds[1]);
@@ -157,8 +168,8 @@ function initMap(){
 
         case 'univ':
             map = L.map('map', {
-                zoomSnap: 0.5
-            }).setView([48.01675, 0.16000], 17);
+                zoomSnap: 0.25
+            }).setView([48.01675, 0.16000], 16.5);
             
             var corner1 = L.latLng(48.020192681819545, 0.15203201842398748);
             var corner2 = L.latLng(48.013931363239564, 0.16932292283386483);
@@ -201,6 +212,7 @@ function executerScriptJouerSon(){
 
     audioElement.setAttribute('src', url); 
     audioElement.setAttribute('controls', 'controls');
+    
     document.getElementById('audioContainer').appendChild(audioElement);
     audioElement.play();
 }//used
@@ -247,9 +259,9 @@ function genererIdSon() {
             3: 17
         },
         Univ: {
-            1: 18,
-            2: 18,
-            3: 16
+            1: 21,
+            2: 21,
+            3: 19
         }
     };
 
@@ -333,15 +345,20 @@ function executerScriptEnvoiScore(score) {
     });
 }//used
 
-function toggleClassement() {
-    let classementContainer = $("#classementContainer");
-    
-    if (classementContainer.is(":visible")) {
-        classementContainer.hide();
-    } else {
-        executerScriptObtentionClassement();
-    }
-}//used
+function afficherAlerteErreur() {
+    Swal.fire({
+        title: 'Erreur',
+        text: 'Vous vous êtes trompé.',
+        icon: 'error',
+        timer: 1500, // Afficher l'alerte pendant 1,5 seconde
+        timerProgressBar: true,
+        showConfirmButton: false
+    });
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function executerScriptObtentionClassement() {
     $.ajax({
@@ -350,7 +367,6 @@ function executerScriptObtentionClassement() {
         success: function(response) {
             let classement = JSON.parse(response);
             afficherClassement(classement);
-            $("#classementContainer").show();
         },
         error: function(xhr) {
             console.error(xhr.responseText);
@@ -359,12 +375,56 @@ function executerScriptObtentionClassement() {
 }//used
 
 function afficherClassement(classement) {
-    let classementContainer = $("#classementContainer");
-    classementContainer.empty(); 
+    let classementHTML = "<b></b>";
     classement.forEach((entry, index) => {
-        classementContainer.append(`<div>${index + 1}. ${entry.userLogin} - ${entry.score}</div>`);
+        if (index === 0) {
+            classementHTML += "🥇"
+        } else if (index === 1) {
+            classementHTML += "🥈"
+        } else if (index === 2) {
+            classementHTML += "🥉"
+        }
+
+        classementHTML += `${index + 1}. ${entry.userLogin} - ${entry.score}<br>`;
     });
-}//used
+
+    Swal.fire({
+        title: 'Classement Global',
+        html: classementHTML,
+        icon: 'info',
+        confirmButtonText: 'OK'
+    });
+}
+
+function resetGame() {
+    marqueurs = [];
+    formes = [];
+    idsUtilises = [];
+    boutonConfirmeClique = false;
+    boutonNextClique = false;
+
+    $("#map").hide();
+    $("#identifiant").show();
+    $("#play").show();
+    $("#background").show();
+    $(".container").show();
+    $(".container2").show();
+    $(".container3").show();
+    $("#containerGlobal").hide();
+    
+    if (map) {
+        map.eachLayer(function(layer) {
+            if (layer instanceof L.Marker || layer instanceof L.Rectangle) {
+                map.removeLayer(layer);
+            }
+        });
+    }
+
+    if (audioContainer.firstChild) {
+        audioContainer.removeChild(audioContainer.firstChild);
+    }//Test TODO
+
+}
 
 // function executerScripEnvoiSon(){
 //     $.ajax({
